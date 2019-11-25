@@ -7,11 +7,21 @@ const end = section.querySelector('h1');
 
 //SCROLL MAGIC
 const controller = new ScrollMagic.Controller()
-const scene = new ScrollMagic.Scene({
-    duration: 500,
+let scene = new ScrollMagic.Scene({
+    duration: 1500,
     triggerElement: intro,
     triggerHook: 0
 })
 .addIndicators()
 .setPin(intro)
+.addTo(controller);
+// TEXT ANIMATION
+const textAnim = TweenMax.fromTo(text, 2/*Duration*/, {opacity: 1}, {opacity: 0});
+
+let scene2 = new ScrollMagic.Scene({
+    duration: 1000,
+    triggerElement:intro,
+    triggerHook:0
+})
+.setTween(textAnim)
 .addTo(controller);
