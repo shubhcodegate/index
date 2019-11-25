@@ -155,7 +155,7 @@ function perfectCollition(obj1,obj2,elastisity=0.3){
     @param elastisity defaults to 1
     */
     if (obj1.position.eq(obj2.position)){
-        let randPos = Vector2D(Math.floor(Math.random()*10),Math.floor(Math.random()*10));
+        let randPos = new Vector2D(Math.floor(Math.random()*10),Math.floor(Math.random()*10));
         obj1.position = obj2.position.add(randPos);
     }
     else if (obj1.position.sub(obj2.position).magnitude()<= obj1.size + obj2.size){
