@@ -1,43 +1,53 @@
-var another,onemore,myscene;
+var another,onemore;
+var myscene=[],bodies = [];
 
-class myParticle extends Particle
-{
-    constructor(x,y,mass,radius,color,velocity=[0,0],accel=[0,0]){
-        super(x,y,mass,radius,velocity=[0,0],accel=[0,0]);
-        this.color = color;
-    }
-    draw(){
-        this.ctx = myGameArea.context;
-        this.ctx.beginPath()
-        this.ctx.arc(this.xPos, this.yPos, this.size, 0, 2 * Math.PI, false);
-        this.ctx.fillStyle = 'green';
-        this.ctx.fill();
-        this.ctx.lineWidth = 5;
-        this.ctx.strokeStyle = '#0000';
-        this.ctx.stroke();
-    }
-}
-// Start the game
-function startGame() {
-    myGameArea.start();
-    another = new myParticle(100,100,50,10,"red");
-    another.enableBoundary([1,1,myGameArea.canvas.width-1,myGameArea.canvas.height-1]);
-    onemore = new myParticle(160,160,50,10,"red");
-    onemore.enableBoundary([1,1,myGameArea.canvas.width-1,myGameArea.canvas.height-1]);
-    myscene = combination([another,onemore]);
+// Launch the simulation
+function launch() {
+    simulationArea.start();
+    simulationSetup(simulationArea);
 }
 
-var myGameArea = {
+function simulationSetup(simulationArea) {
+    // another = new myParticle(100,100,50,10,"red");
+    // another.enableBoundary([1,1,simulationArea.canvas.width-1,simulationArea.canvas.height-1]);
+    // onemore = new myParticle(160,160,50,10,"red");
+    // onemore.enableBoundary([1,1,simulationArea.canvas.width-1,simulationArea.canvas.height-1]);
+    
+    for (let i = 50; i < simulationArea.canvas.width; i+=100) {
+        bodies.push(new myParticle(i,100,50,5,"red").enableBoundary([1,1,simulationArea.canvas.width-1,simulationArea.canvas.height-1]))
+    }
+    another = bodies[0];
+    myscene = combination(bodies);
+}
+
+function update() {
+    myscene.forEach(element => {
+        perfectCollition(element[0],element[1]);
+    });
+    if (simulationArea.keys && simulationArea.keys[37]) {another.applyForce(new Vector2D(-1,0));}
+    if (simulationArea.keys && simulationArea.keys[39]) {another.applyForce(new Vector2D(1,0)); }
+    if (simulationArea.keys && simulationArea.keys[38]) {another.applyForce(new Vector2D(0,-1));}
+    if (simulationArea.keys && simulationArea.keys[40]) {another.applyForce(new Vector2D(0,1));}   
+    simulationArea.clear();
+    // another.move();
+    // onemore.move();
+    bodies.forEach(element => {
+        element.move().draw();
+    });
+    // another.draw();
+    // onemore.draw()
+}
+var simulationArea = {
     canvas : document.querySelector('canvas'),
     start : function() {
         this.context = this.canvas.getContext("2d");
-        this.interval = setInterval(updateGameArea, 20);
+        this.interval = setInterval(update, 20);
         window.addEventListener('keydown', function (e) {
-            myGameArea.keys = (myGameArea.keys || []);
-            myGameArea.keys[e.keyCode] = (e.type == "keydown");
+            simulationArea.keys = (simulationArea.keys || []);
+            simulationArea.keys[e.keyCode] = (e.type == "keydown");
         })
         window.addEventListener('keyup', function (e) {
-            myGameArea.keys[e.keyCode] = (e.type == "keydown");            
+            simulationArea.keys[e.keyCode] = (e.type == "keydown");            
         })
         window.addEventListener("keydown", function(e) {
             // space and arrow keys
@@ -51,19 +61,4 @@ var myGameArea = {
         this.context.fillStyle = 'black';
         this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
-}
-
-function updateGameArea() {
-    myscene.forEach(element => {
-        perfectCollition(element[0],element[1]);
-    });
-    if (myGameArea.keys && myGameArea.keys[37]) {another.applyForce(new Vector2D(-0.1,0));}
-    if (myGameArea.keys && myGameArea.keys[39]) {another.applyForce(new Vector2D(0.1,0)); }
-    if (myGameArea.keys && myGameArea.keys[38]) {another.applyForce(new Vector2D(0,-0.1));}
-    if (myGameArea.keys && myGameArea.keys[40]) {another.applyForce(new Vector2D(0,0.1));}   
-    another.move();
-    onemore.move();
-    myGameArea.clear();
-    another.draw();
-    onemore.draw()
 }

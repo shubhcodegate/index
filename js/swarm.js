@@ -1,5 +1,5 @@
 const mycanvas = document.querySelector('canvas');
-var VISCOSITY = 0.05
+var VISCOSITY = 0.01
 
 class Vector2D 
 {
@@ -57,7 +57,7 @@ class Particle
     @param velocity default [0,0]
     @param accel default [0,0]
     */
-    constructor(x,y,mass,radius,velocity=[0,0],accel=[0,0])
+    constructor(x,y,mass,radius,isbounded=false,velocity=[0,0],accel=[0,0])
     {
         particleCount+=1;
         this.objtype = "Particle";
@@ -66,8 +66,9 @@ class Particle
         this.accel = new Vector2D(accel[0],accel[1]);
         this.mass = mass;
         this.size = radius;
-        this.boundaryflag = false;
+        this.boundaryflag = isbounded;
         this.box = [-Infinity,-Infinity,Infinity,Infinity];
+        return this;
     }
     get xPos()
     {
@@ -84,12 +85,14 @@ class Particle
         this.velocity = this.velocity.mul(1-VISCOSITY);
         
         if (this.boundaryflag) this.boundaryCondition();
+        return this;
     }
     enableBoundary(box){
         // Boundary Toggle ult False
         //@param box [x_start,y_start,x_end,y_end]
         this.box = box;
         this.boundaryflag = ~this.boundaryflag;
+        return this;
 }
     boundaryCondition(){
         if (this.position.values[0]>= this.box[2]-this.size){
@@ -112,9 +115,27 @@ class Particle
     applyForce(force){
         // Force to be applied on Particle
         //@param force = physics.Vector2D()
-        this.accel = this.accel.add(force.div(this.mass));
+        // this.accel = this.accel.add(force.div(this.mass));
+        this.accel = force.div(this.mass);
     }
         
+}
+class myParticle extends Particle
+{
+    constructor(x,y,mass,radius,color,isbounded=false,velocity=[0,0],accel=[0,0]){
+        super(x,y,mass,radius,isbounded=false,velocity=[0,0],accel=[0,0]);
+        this.color = color;
+    }
+    draw(){
+        this.ctx = simulationArea.context;
+        this.ctx.beginPath()
+        this.ctx.arc(this.xPos, this.yPos, this.size, 0, 2 * Math.PI, false);
+        this.ctx.fillStyle = this.color;
+        this.ctx.fill();
+        this.ctx.lineWidth = 5;
+        this.ctx.strokeStyle = '#0000';
+        this.ctx.stroke();
+    }
 }
 function combination(list) {
     var results=[];

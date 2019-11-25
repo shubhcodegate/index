@@ -1,17 +1,3 @@
-
-class myParticle extends Particle
-{
-    constructor(x,y,mass,radius,color,velocity=[0,0],accel=[0,0]){
-        super(x,y,mass,radius,velocity=[0,0],accel=[0,0]);
-        this.color = color;
-    }
-    draw(){
-        var ctx = myGameArea.context;
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.postion.x, this.position.y, this.size, this.size);
-    }
-}
-
 function startGame(){
     myGameArea.start();
     myGamePiece = new myParticle(0,0,30,100,"red");
