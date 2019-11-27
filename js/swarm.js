@@ -138,14 +138,14 @@ class myParticle extends Particle
         this.ctx.arc(this.xPos, this.yPos, this.size, 0, 2 * Math.PI, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
-        this.ctx.lineWidth = 5;
-        this.ctx.strokeStyle = '#0000';
-        this.ctx.stroke();
+        // this.ctx.lineWidth = 5;
+        // this.ctx.strokeStyle = '#0000';
+        // this.ctx.stroke();
     }
 }
 class SwarmParticle extends myParticle
 {
-    constructor(x,y,mass,radius,color,swarm,isbounded=true,velocity=[0,0],accel=[0,0],w=0.8,c1=0.001,c2=0.05){
+    constructor(x,y,mass,radius,color,swarm,isbounded=true,velocity=[0,0],accel=[0,0],w=0,c1=0.001,c2=0.05){
         super(x,y,mass,radius,color,isbounded=false,velocity=[0,0],accel=[0,0]);
         this.swarm = swarm;
         this.w = w;    //Self Momentum default was 0.8
@@ -158,7 +158,7 @@ class SwarmParticle extends myParticle
         for (const hunter of this.swarm.hunters) {
             let relative = this.position.sub(hunter.position);
             let modRelative = relative.magnitude()
-            var Force = relative.div(modRelative).mul(sigmoid(modRelative)*1000);
+            var Force = relative.div(modRelative).mul(sigmoid(modRelative)*500);
             this.applyForce(Force);
         }
             
@@ -339,7 +339,7 @@ class followerParticle extends myParticle
                 }
         
         // let modRelative = relative.magnitude();
-        var Force = relative.div(10);
+        var Force = relative;
         this.applyForce(Force);
         // this.accel = relative.div(5000);
         super.move();

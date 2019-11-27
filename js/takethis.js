@@ -1,6 +1,7 @@
 var another,onemore,boundary;
 var myscene=[],bodies = [],mousePos={x:0,y:0},thishunter;
 var mousevector = new Vector2D(mousePos.x,mousePos.y);
+var colorScheme = ['#2c3531','#116466','#d9b08c','#ffcb9a','#d1e8e2']
 var simulationArea = {
     canvas : document.querySelector('canvas'),
     init : function() {
@@ -30,7 +31,7 @@ var simulationArea = {
     }, 
     clear : function(){
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.context.fillStyle = 'black';
+        this.context.fillStyle = colorScheme[1];
         this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 }
@@ -39,6 +40,7 @@ var simulationArea = {
 function launch() {
     simulationArea.init();
     boundary = [1,1,simulationArea.canvas.clientWidth-1,simulationArea.canvas.clientHeight-1];
+    mousePos.x = boundary[2]/2 ,    mousePos.y = boundary[3]/2;
     simulationSetup(simulationArea);
 }
 
@@ -49,18 +51,18 @@ function simulationSetup(simulationArea) {
     // onemore.enableBoundary(boundary);
     
     for (let i = 5; i < simulationArea.canvas.width; i+=1000) {
-        bodies.push(new myParticle(i,100,50,5,"red").enableBoundary(boundary));
+        bodies.push(new myParticle(i,100,50,5,colorScheme[0]).enableBoundary(boundary));
     }
     
     another = bodies[0];
-    myswarm = Swarm.createSwarm(200,new Vector2D(200,200),"white",boundary,4,50)
+    myswarm = Swarm.createSwarm(300,new Vector2D(200,200),colorScheme[2],boundary,4,50)
     // myswarm.enableBoundary(boundary);
-    thishunter = new followerParticle(100,500,50,10,'yellow',new Vector2D(mousePos.x,mousePos.y)).enableBoundary(boundary);
+    thishunter = new followerParticle(100,500,10000,30,colorScheme[0],new Vector2D(mousePos.x,mousePos.y)).enableBoundary(boundary);
     // another = thishunter;
     bodies.push(thishunter)
     // bodies.push(...myswarm.collection);
     myscene = combination([...bodies,...myswarm.collection]);
-    // myswarm.addHunters([another]);
+    myswarm.addHunters([thishunter]);
 }
 function update() {
     mousevector.x = mousePos.x,mousevector.y = mousePos.y;
