@@ -38,7 +38,7 @@ var simulationArea = {
 // Launch the simulation
 function launch() {
     simulationArea.init();
-    boundary = [1,1,simulationArea.canvas.width-1,simulationArea.canvas.height-1];
+    boundary = [1,1,simulationArea.canvas.clientWidth-1,simulationArea.canvas.clientHeight-1];
     simulationSetup(simulationArea);
 }
 
