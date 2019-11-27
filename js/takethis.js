@@ -6,6 +6,7 @@ var simulationArea = {
     canvas : document.querySelector('canvas'),
     init : function() {
         // this.context = this.canvas.getContext("2d");
+        if(this.canvas.clientWidth<500 ||this.canvas.clientHeight<800 ) VISCOSITY = 0.1
         this.context = setupCanvas(this.canvas);
         this.interval = setInterval(update, 20);
         window.addEventListener('keydown', function (e) {
@@ -50,14 +51,14 @@ function simulationSetup(simulationArea) {
     // onemore = new myParticle(160,160,50,10,"red");
     // onemore.enableBoundary(boundary);
     
-    for (let i = 5; i < simulationArea.canvas.width; i+=1000) {
-        bodies.push(new myParticle(i,100,50,5,colorScheme[0]).enableBoundary(boundary));
+    for (let i = 5; i < boundary[2]; i+=50) {
+        bodies.push(new myParticle(i,100,50,3 + Math.random()*10,colorScheme[0]).enableBoundary(boundary));
     }
     
     another = bodies[0];
     myswarm = Swarm.createSwarm(300,new Vector2D(200,200),colorScheme[2],boundary,4,50)
     // myswarm.enableBoundary(boundary);
-    thishunter = new followerParticle(100,500,10000,30,colorScheme[0],new Vector2D(mousePos.x,mousePos.y)).enableBoundary(boundary);
+    thishunter = new followerParticle(mousePos.x,mousePos.y,10000,50,colorScheme[0],new Vector2D(mousePos.x,mousePos.y)).enableBoundary(boundary);
     // another = thishunter;
     bodies.push(thishunter)
     // bodies.push(...myswarm.collection);

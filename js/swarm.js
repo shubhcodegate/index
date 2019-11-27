@@ -1,5 +1,5 @@
 const mycanvas = document.querySelector('canvas');
-var VISCOSITY = 0.01
+var VISCOSITY = 0.05
 
 class Vector2D 
 {
@@ -158,7 +158,7 @@ class SwarmParticle extends myParticle
         for (const hunter of this.swarm.hunters) {
             let relative = this.position.sub(hunter.position);
             let modRelative = relative.magnitude()
-            var Force = relative.div(modRelative).mul(sigmoid(modRelative)*500);
+            var Force = relative.div(modRelative).mul(sigmoid(modRelative)*hunter.size*1000);
             this.applyForce(Force);
         }
             
@@ -271,9 +271,10 @@ class Swarm
     {
         var newSwarm = new Swarm(n,target,box);
         var collection = [];
+        
         for (let i = 0; i < n; i++) {
-            let randPos = [Math.random()*500,Math.random()*500];
-            collection.push(new SwarmParticle(randPos[0],randPos[1],particle_mass,particle_size,color,newSwarm).enableBoundary(newSwarm.box));      
+            let randPos = [Math.random()*boundary[2],Math.random()*boundary[3]];
+            collection.push(new SwarmParticle(randPos[0],randPos[1],particle_mass + Math.random()*5,particle_size + Math.random()*5,color,newSwarm).enableBoundary(newSwarm.box));      
         }
         newSwarm.addCollection(collection);
         return newSwarm;
