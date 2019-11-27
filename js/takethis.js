@@ -6,7 +6,7 @@ var simulationArea = {
     canvas : document.querySelector('canvas'),
     init : function() {
         // this.context = this.canvas.getContext("2d");
-        if(this.canvas.clientWidth<500 ||this.canvas.clientHeight<800 ) VISCOSITY = 0.1
+        if(this.canvas.clientWidth<500 ||this.canvas.clientHeight<800 ) VISCOSITY = 0.2
         this.context = setupCanvas(this.canvas);
         this.interval = setInterval(update, 20);
         window.addEventListener('keydown', function (e) {
