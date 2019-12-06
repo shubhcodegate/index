@@ -1,53 +1,6 @@
 const mycanvas = document.querySelector('canvas');
-var VISCOSITY = 0.05
-
-class Vector2D 
-{
-    constructor(x, y) {this.values = [x, y]}
-    get x(){return this.values[0]}
-    get y(){return this.values[1]}
-    set x(value){this.values[0]=value};
-    set y(value){this.values[1]=value};
-    magnitude() {
-        return Math.sqrt(this.values[0] * this.values[0] + this.values[1] * this.values[1]);
-    }
-    add(other) {
-        return new Vector2D(this.values[0] + other.values[0], this.values[1] + other.values[1]);
-    }
-    sub(other) {
-        return new Vector2D(this.values[0] - other.values[0], this.values[1] - other.values[1]);
-    }
-    eq(other) {
-        return (this.values[0] === other.values[0] && this.values[1] === other.values[1])
-    }
-    lt(other) {
-        return this.magnitude() < other.magnitude();
-    }
-    gt(other) {
-        return this.magnitude() > other.magnitude();
-    }
-    le(other) {
-        return this.magnitude() <= other.magnitude();
-    }
-    ge(other) {
-        return this.magnitude() >= other.magnitude();
-    }
-    mul(other) {
-        return new Vector2D(this.values[0] * other, this.values[1] * other);
-    }
-    div(other){
-        return new Vector2D(this.values[0] / other, this.values[1] / other);
-    }
-    neg(){
-        return new Vector2D(-this.values[0], -this.values[1]);
-    }
-    dotProd(other) {
-        return (this.values[0] * other.values[0] + this.values[1] * other.values[1]);
-    }
-    relativeDist(other){
-        return this.sub(other).magnitude();
-    }
-}
+var Vector = Matter.Vector
+var VISCOSITY = 0.01
 var particleCount = 0
 class Particle
 {
@@ -59,160 +12,108 @@ class Particle
     @param velocity default [0,0]
     @param accel default [0,0]
     */
-    constructor(x,y,mass,radius,isbounded=false,velocity=[0,0],accel=[0,0])
+    constructor(world,x,y,radius,options={
+        restitution: 1,
+        render: {
+            fillStyle: colorScheme[2],
+            strokeStyle: 'none',
+            lineWidth: 1
+        }
+    })
     {
         particleCount+=1;
+        this.body = Bodies.circle(x,y,radius,options);
         this.objtype = "Particle";
-        this.position = new Vector2D(x,y);
-        this.velocity = new Vector2D(velocity[0],velocity[1]);
-        this.accel = new Vector2D(accel[0],accel[1]);
-        this.mass = mass;
+        this.force = Vector.create(0,0);
         this.size = radius;
-        this.boundaryflag = isbounded;
-        this.box = [-Infinity,-Infinity,Infinity,Infinity];
+        World.add(world, this.body);
         return this;
     }
-    get xPos()
+    get x()
     {
-        return this.position.x;
+        return this.body.position.x;
     }
-    get yPos()
+    get y()
     {
-        return this.position.y;
+        return this.body.position.y;
     }
-    move()
+    set x(value)
     {
-        this.velocity = this.velocity.add(this.accel);
-        this.position = this.position.add(this.velocity);
-        this.velocity = this.velocity.mul(1-VISCOSITY);
-        
-        if (this.boundaryflag) this.boundaryCondition();
-        this.accel.x=0;
-        this.accel.y=0;
-        return this;
+        this.body.position.x = value;
     }
-    enableBoundary(box){
-        // Boundary Toggle ult False
-        //@param box [x_start,y_start,x_end,y_end]
-        if(box == undefined) throw "Need box of length 4";
-        this.box = box;
-        this.boundaryflag = ~this.boundaryflag;
-        return this;
-}
-    boundaryCondition(){
-        if (this.position.values[0]>= this.box[2]-this.size){
-            this.velocity.values[0] = -this.velocity.values[0];
-            this.position.values[0] = this.box[2]-this.size;
-        }
-        if (this.position.values[0]<=this.box[0] + this.size){
-            this.velocity.values[0] = -this.velocity.values[0];
-            this.position.values[0] =this.box[0] + this.size;
-        }
-        if (this.position.values[1]>=this.box[3]-this.size){
-            this.velocity.values[1] = -this.velocity.values[1];
-            this.position.values[1] =this.box[3]-this.size;
-        }
-        if (this.position.values[1]<=this.box[1] + this.size){
-            this.velocity.values[1] = -this.velocity.values[1];
-            this.position.values[1] =this.box[1] + this.size;
-        }
+    set y(value)
+    {
+        this.body.position.y = value;
     }
-    applyForce(force){
-        // Force to be applied on Particle
-        //@param force = Vector2D()
-        if(force==undefined) throw "force cannot be undefined"
-        this.accel = this.accel.add(force.div(this.mass));
-        // this.accel = force.div(this.mass);
+    get position()
+    {
+        return this.body.position;
+    }
+    applyForce(position,force){
+        if(force==undefined) throw "force cannot be undefined";
+        Body.applyForce(this.body, position, force);
     }
         
 }
-class myParticle extends Particle
+class SwarmParticle extends Particle
 {
-    constructor(x,y,mass,radius,color,isbounded=false,velocity=[0,0],accel=[0,0]){
-        super(x,y,mass,radius,isbounded=false,velocity=[0,0],accel=[0,0]);
-        this.color = color;
-    }
-    draw(){
-        this.ctx = simulationArea.context;
-        this.ctx.beginPath()
-        this.ctx.arc(this.xPos, this.yPos, this.size, 0, 2 * Math.PI, false);
-        this.ctx.fillStyle = this.color;
-        this.ctx.fill();
-        // this.ctx.lineWidth = 5;
-        // this.ctx.strokeStyle = '#0000';
-        // this.ctx.stroke();
-    }
-}
-class SwarmParticle extends myParticle
-{
-    constructor(x,y,mass,radius,color,swarm,isbounded=true,velocity=[0,0],accel=[0,0],w=0,c1=0.001,c2=0.05){
-        super(x,y,mass,radius,color,isbounded=false,velocity=[0,0],accel=[0,0]);
+    constructor(world,x,y,radius,swarm,w=0,c1=0.001,c2=0.05,options){
+        super(world,x,y,radius,options);
         this.swarm = swarm;
         this.w = w;    //Self Momentum default was 0.8
         this.c1 = c1;    //Social Parameter default was 0.4
         this.c2 = c2;     //Cognitive Parameter default was 0.1
-        this.pbest = this.position;
+        this.pbest = this.body.position;
     }
     avoidEnemy()
     {
         for (const hunter of this.swarm.hunters) {
-            let relative = this.position.sub(hunter.position);
-            let modRelative = relative.magnitude()
-            var Force = relative.div(modRelative).mul(sigmoid(modRelative)*hunter.size*1000);
-            this.applyForce(Force);
+            let relative = Vector.sub(this.body.position,hunter.position);
+            let modRelative = Vector.magnitude(relative);
+            var Force = Vector.mult(Vector.div(relative,modRelative),sigmoid(modRelative)*hunter.size);
+            this.applyForce({x:this.xPos,y:this.yPos},Force);
         }
             
     }
-    move()
+    update()
     {
-        let cogPar = this.pbest.sub(this.position).mul(this.c1);
-        let socPar = this.swarm.gbest.sub(this.position).mul(this.c2);
-        this.accel = cogPar.add(socPar).div((1-this.w)*this.mass);
+        let cogPar = Vector.mult(Vector.sub(this.pbest,this.body.position),this.c1);
+        let socPar = Vector.mult(Vector.sub(this.swarm.gbest,this.body.position),this.c2);
+        let selfMo = Vector.mult(this.body.velocity,(this.w-1));
+        var PSOForce = Vector.add(cogPar,Vector.add(socPar,selfMo));
+        this.applyForce(Vector.create(this.xPos,this.yPos),PSOForce);
         this.avoidEnemy();
-        if(this.swarm.target instanceof Vector2D)
-                {
-                    if (distanceOptimization(this.pbest,this.swarm.target) > distanceOptimization(this.position,this.swarm.target)) this.pbest = this.position;
-                }
-        else if (this.swarm.target instanceof Particle)
-                {
-                    if (distanceOptimization(this.pbest,this.swarm.target.position) > distanceOptimization(this.position,this.swarm.target.position)) this.pbest = this.position;
-                }
-        if (this.boundaryflag)
-        {
-            this.boundaryCondition()
-        }
-        super.move();
+        if (distanceOptimization(this.pbest,this.swarm.target) > distanceOptimization(this.position,this.swarm.target)) this.pbest = this.position;
         return this;
     }
     explore()
     {
-        randForce = new Vector2D(Math.random()*10,Math.random()*10);
+        randForce = Vector.create(Math.random()*10,Math.random()*10);
         this.applyForce(randForce) 
     }
           
 }
-        
 
 class Swarm
 {
     /*
-    This is a swarm of particles with a target 
-    @param n number of particles in this swarm
-    @param target to optimize the distance
-    @param collection  the particle list
-    @param hunters HunterParticle
+    * This is a swarm of particles with a target 
+    * @method constructor
+    * @param {n} number of particles in this swarm
+    * @param {target} to optimize the distance
+    * @param {collection}  the particle list
+    * @param {hunters} HunterParticle
     */
-    constructor(n,target,box = [-Infinity,-Infinity,Infinity,Infinity],isbounded=false,collection=[],hunters = [])
+    constructor(n,target,collection=[],hunters = [])
     {
         this.objtype = "Swarm"
         this.n = n
-        this.gbest = new Vector2D(0,0);
+        this.gbest = {x:0, y:0};
         this.collection = collection;
         this.hunters = hunters;
         this.target = target;
-        this.boundaryflag = isbounded;
-        this.box = box;
     }
+    
     addHunters(hunters)
     {
         this.hunters = hunters;
@@ -229,36 +130,15 @@ class Swarm
         this.collection=collection;
         return this;
     }
-    move()
+    update()
     {
         for (var i of this.collection) {
-             i.move()
-            if(this.target instanceof Vector2D)
-                {
-                    if (distanceOptimization(i.pbest,this.target) < distanceOptimization(this.gbest,this.target)) this.gbest = i.pbest;
-                }
-            else if (this.target instanceof Particle)
-                {
-                    if (distanceOptimization(i.pbest,this.target.position) < distanceOptimization(this.gbest,this.target.position)) this.gbest = i.pbest;
-                }
+            i.update();
+            if (distanceOptimization(i.pbest,this.target) < distanceOptimization(this.gbest,this.target)) this.gbest = i.pbest;
+    
         }
         return this;
     }   
-    draw()
-    {
-        for (const i of this.collection)    i.draw();
-        return this;
-    }
-    enableBoundary(box)
-    {
-        if(box == undefined) throw "Need box of length 4";
-        this.box = box;
-        for (var i of this.collection){
-             i.enableBoundary(this.box);
-        }
-           
-        return this;
-    }
     explore()
     {
         for (let i = 0; i < 10; i++) 
@@ -267,21 +147,21 @@ class Swarm
         }
         return this;
     }
-    static createSwarm(n,target,color,box,particle_size=5,particle_mass=2)
+    static createSwarm(world,n,target,options)
     {
-        var newSwarm = new Swarm(n,target,box);
+        var newSwarm = new Swarm(n,target);
         var collection = [];
         
         for (let i = 0; i < n; i++) {
-            let randPos = [Math.random()*boundary[2],Math.random()*boundary[3]];
-            collection.push(new SwarmParticle(randPos[0],randPos[1],particle_mass + Math.random()*5,particle_size + Math.random()*5,color,newSwarm).enableBoundary(newSwarm.box));      
+            let randPos = [Math.random()*500,Math.random()*500];
+            collection.push(new SwarmParticle(world,randPos[0],randPos[1],10,newSwarm));      
         }
         newSwarm.addCollection(collection);
         return newSwarm;
     }
            
 }
-class HunterParticle extends myParticle
+class HunterParticle extends Particle
 {
     constructor(x,y,mass,radius,color,target=[],isbounded=false,velocity=[0,0],accel=[0,0])
     {
@@ -297,7 +177,7 @@ class HunterParticle extends myParticle
     move()
     {
         let relative;
-        if(this.target instanceof Vector2D)
+        if(this.target instanceof Vector)
                 {
                     relative = this.target.sub(this.position);
                 }
@@ -307,19 +187,29 @@ class HunterParticle extends myParticle
                 }
         
         let modRelative = relative.magnitude();
-        var Force = relative.div(modRelative).mul(attacksigmoid(modRelative)*10);
-        this.applyForce(Force)
+        if(modRelative!==0)
+        {
+            var Force = relative.div(modRelative).mul(attacksigmoid(modRelative)*10);
+            this.applyForce(Force);
+        }
+        
         super.move();
         return this;
     }
        
 }
-class followerParticle extends myParticle
+class followerParticle extends Particle
 {
     constructor(x,y,mass,radius,color,target=[],isbounded=false,velocity=[0,0],accel=[0,0])
     {
         super(x,y,mass,radius,color,isbounded=false,velocity=[0,0],accel=[0,0]);
-        this.target = target
+        this.target = target;
+        this.kp = 0;
+        this.ki = 0;
+        this.kd = 0;
+        this.error = 0;
+        this.errorsum = 0;
+        this.lasterror = 0;
     }
         
     addTarget(target)
@@ -330,7 +220,7 @@ class followerParticle extends myParticle
     move()
     {
         let relative;
-        if(this.target instanceof Vector2D)
+        if(this.target instanceof Vector)
                 {
                     relative = this.target.sub(this.position);
                 }
@@ -339,11 +229,19 @@ class followerParticle extends myParticle
                     relative = this.target.position.sub(this.position);
                 }
         
-        // let modRelative = relative.magnitude();
-        var Force = relative;
+        var error = relative.magnitude();
+        var unitVector = relative.div(error);
+        var mag = this.error*this.kp + this.errorsum*this.ki + (this.error - this.lasterror)*this.kd;
+        var Force = relative.div(modRelative).mul(sigmoid(modRelative)*10);
         this.applyForce(Force);
+        // if(modRelative !== 0) 
+        //     {
+        //         var Force = relative.div(modRelative).mul(sigmoid(modRelative)*10);
+        //         this.applyForce(Force);
+        //     }
         // this.accel = relative.div(5000);
         super.move();
+        this.lasterror = this.error;
         return this;
     }
 }
@@ -357,43 +255,29 @@ function combination(list) {
     }
     return results;
 }
-function perfectCollition(obj1,obj2,elastisity=0.3){
-    /*
-    This is a custom implimentation of physics collider 
-    @param obj1 physics particle
-    @param obj2 physics particle
-    @param elastisity ults to 1
-    */
-    if (obj1.position.eq(obj2.position)){
-        let randPos = new Vector2D(Math.floor(Math.random()*10),Math.floor(Math.random()*10));
-        obj1.position = obj2.position.add(randPos);
-    }
-    else if (obj1.position.sub(obj2.position).magnitude()<= obj1.size + obj2.size){
-    // ------Collided---
-        let x1_x2 = obj1.position.sub(obj2.position);
-        let modx1_x2 = x1_x2.magnitude();
-        let modx1_x2sq = Math.pow(modx1_x2,2);
-        let v1_v2 = obj1.velocity.sub(obj2.velocity);
-        let mass1 = (2*obj2.mass)/(obj1.mass+obj2.mass);
-        let mass2 = (2*obj1.mass)/(obj1.mass+obj2.mass);
-        let vdotsub = v1_v2.dotProd(x1_x2)/modx1_x2sq;
 
-        let vdotsub1 = x1_x2.mul(vdotsub*mass1);
-        let vdotsub2 = x1_x2.neg().mul(vdotsub*mass2);
-        
-        obj1.velocity = obj1.velocity.sub(vdotsub1);
-        obj2.velocity = obj2.velocity.sub(vdotsub2);
-        let temp = obj1.position;
-        obj1.position = obj2.position.add((x1_x2.div(modx1_x2)).mul(obj1.size+obj2.size));
-        obj2.position = temp.sub((x1_x2.div(modx1_x2)).mul(obj1.size+obj2.size));
-    }
-}
 function sigmoid(x){ return 1 / (1 + Math.exp(0.2*x-10)); } 
 function attacksigmoid(x){return 1 / (1 + Math.exp(-0.05*x+10));}  
 function distanceOptimization(pos1,pos2) {
-    return pos1.relativeDist(pos2);
+    return Vector.magnitude(Vector.sub(pos1,pos2));
 }
 
 function linearForce(x) {
     return 10;
 }
+
+function setupCanvas(canvas) {
+    // Get the device pixel ratio, falling back to 1.
+    var dpr = window.devicePixelRatio || 1;
+    // Get the size of the canvas in CSS pixels.
+    var rect = canvas.getBoundingClientRect();
+    // Give the canvas pixel dimensions of their CSS
+    // size * the device pixel ratio.
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    var ctx = canvas.getContext('2d');
+    // Scale all drawing operations by the dpr, so you
+    // don't have to worry about the difference.
+    ctx.scale(dpr, dpr);
+    return ctx;
+  }
