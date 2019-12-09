@@ -176,7 +176,7 @@ class Swarm
         
         for (let i = 0; i < n; i++) {
             let randPos = [Math.random()*500,Math.random()*500];
-            collection.push(new SwarmParticle(world,randPos[0],randPos[1],3,newSwarm,options));      
+            collection.push(new SwarmParticle(world,randPos[0],randPos[1],5,newSwarm,options));      
         }
         newSwarm.addCollection(collection);
         return newSwarm;

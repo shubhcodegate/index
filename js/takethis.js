@@ -9,7 +9,7 @@ var Engine = Matter.Engine,
   mousePos={x:0,y:0};
 var engine = Engine.create();
 engine.world.gravity = {x:0,y:0}
-var myswarm = Swarm.createSwarm(engine.world,100,Vector.create(100,100));
+var myswarm = Swarm.createSwarm(engine.world,200,Vector.create(100,100));
 var newHunter =new  HunterParticle(engine.world,50,50,5,myswarm.collection[0]);
 myswarm.addHunters([newHunter]);
 function update() {
