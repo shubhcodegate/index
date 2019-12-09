@@ -1,7 +1,14 @@
+var Engine = Matter.Engine,
+  Render = Matter.Render,
+  World = Matter.World,
+  Bodies = Matter.Bodies,
+  Body = Matter.Body,
+  colorScheme = ['#2c3531','#116466','#d9b08c','#ffcb9a','#d1e8e2'];
 const mycanvas = document.querySelector('canvas');
 var Vector = Matter.Vector
 var VISCOSITY = 0.01
 var particleCount = 0
+var FORCE_MULTI = 0.0001
 class Particle
 {
     /*
@@ -13,9 +20,9 @@ class Particle
     @param accel default [0,0]
     */
     constructor(world,x,y,radius,options={
-        restitution: 1,
+        restitution: 0,
         render: {
-            fillStyle: colorScheme[2],
+            fillStyle: colorScheme[1],
             strokeStyle: 'none',
             lineWidth: 1
         }
@@ -49,15 +56,20 @@ class Particle
     {
         return this.body.position;
     }
+    get mass()
+    {
+        return this.body.mass;
+    }
     applyForce(position,force){
         if(force==undefined) throw "force cannot be undefined";
-        Body.applyForce(this.body, position, force);
+        else    Body.applyForce(this.body, position, force);
+        this.force = Vector.create(0,0);
     }
         
 }
 class SwarmParticle extends Particle
 {
-    constructor(world,x,y,radius,swarm,w=0,c1=0.001,c2=0.05,options){
+    constructor(world,x,y,radius,swarm,options,w=0.8,c1=0.04,c2=0.1){
         super(world,x,y,radius,options);
         this.swarm = swarm;
         this.w = w;    //Self Momentum default was 0.8
@@ -68,22 +80,24 @@ class SwarmParticle extends Particle
     avoidEnemy()
     {
         for (const hunter of this.swarm.hunters) {
-            let relative = Vector.sub(this.body.position,hunter.position);
+            let relative = Vector.sub(this.position,hunter.position);
             let modRelative = Vector.magnitude(relative);
-            var Force = Vector.mult(Vector.div(relative,modRelative),sigmoid(modRelative)*hunter.size);
-            this.applyForce({x:this.xPos,y:this.yPos},Force);
+            this.force = Vector.add(this.force,Vector.mult(Vector.div(relative,modRelative),sigmoid(modRelative)*FORCE_MULTI*10));
         }
-            
+        return this;
     }
     update()
     {
+        this.avoidEnemy();
         let cogPar = Vector.mult(Vector.sub(this.pbest,this.body.position),this.c1);
         let socPar = Vector.mult(Vector.sub(this.swarm.gbest,this.body.position),this.c2);
         let selfMo = Vector.mult(this.body.velocity,(this.w-1));
-        var PSOForce = Vector.add(cogPar,Vector.add(socPar,selfMo));
-        this.applyForce(Vector.create(this.xPos,this.yPos),PSOForce);
-        this.avoidEnemy();
+        var PSOForce = Vector.mult(Vector.add(cogPar,Vector.add(socPar,selfMo)),this.mass*FORCE_MULTI);
+        this.force = Vector.add(this.force,PSOForce);
         if (distanceOptimization(this.pbest,this.swarm.target) > distanceOptimization(this.position,this.swarm.target)) this.pbest = this.position;
+        // this.applyForce(Vector.create(this.x,this.y),PSOForce);
+
+        this.applyForce(Vector.create(this.x,this.y),this.force);
         return this;
     }
     explore()
@@ -108,7 +122,7 @@ class Swarm
     {
         this.objtype = "Swarm"
         this.n = n
-        this.gbest = {x:0, y:0};
+        this.gbest = Vector.create(0,0);
         this.collection = collection;
         this.hunters = hunters;
         this.target = target;
@@ -147,14 +161,22 @@ class Swarm
         }
         return this;
     }
-    static createSwarm(world,n,target,options)
+    static createSwarm(world,n,target,options={
+        // friction: 0.1,
+        restitution: 0.5,
+        render: {
+            fillStyle: colorScheme[0],
+            strokeStyle: 'none',
+            lineWidth: 1
+        }
+    })
     {
         var newSwarm = new Swarm(n,target);
         var collection = [];
         
         for (let i = 0; i < n; i++) {
             let randPos = [Math.random()*500,Math.random()*500];
-            collection.push(new SwarmParticle(world,randPos[0],randPos[1],10,newSwarm));      
+            collection.push(new SwarmParticle(world,randPos[0],randPos[1],3,newSwarm,options));      
         }
         newSwarm.addCollection(collection);
         return newSwarm;
@@ -163,37 +185,36 @@ class Swarm
 }
 class HunterParticle extends Particle
 {
-    constructor(x,y,mass,radius,color,target=[],isbounded=false,velocity=[0,0],accel=[0,0])
+    constructor(world,x,y,radius,target,options={
+        restitution: 0,
+        friction: 0,
+        density: 0.1,
+        render: {
+            fillStyle: colorScheme[3],
+            strokeStyle: 'none',
+            lineWidth: 1
+        }
+    })
     {
-        super(x,y,mass,radius,color,isbounded=false,velocity=[0,0],accel=[0,0]);
+        super(world,x,y,radius,options);
         this.target = target
     }
         
     addTarget(target)
     {
-        this.target = target
+        this.target = target;
         return this;
     }
-    move()
+    
+    update()
     {
-        let relative;
-        if(this.target instanceof Vector)
-                {
-                    relative = this.target.sub(this.position);
-                }
-        else if (this.target instanceof Particle)
-                {
-                    relative = this.target.position.sub(this.position);
-                }
-        
-        let modRelative = relative.magnitude();
-        if(modRelative!==0)
+        let relative = Vector.sub(this.target,this.position);
+        let modRelative = Vector.magnitude(relative);
+        if(modRelative !== 0)
         {
-            var Force = relative.div(modRelative).mul(attacksigmoid(modRelative)*10);
-            this.applyForce(Force);
+            var Force = Vector.mult(Vector.div(relative,modRelative),attacksigmoid(modRelative)*this.mass*FORCE_MULTI*500);
         }
-        
-        super.move();
+        this.applyForce(Vector.create(this.x,this.y),Force);
         return this;
     }
        

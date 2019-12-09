@@ -5,8 +5,18 @@ var Engine = Matter.Engine,
   Body = Matter.Body,
   frontcanvas = document.querySelector('canvas'),
   colorScheme = ['#2c3531','#116466','#d9b08c','#ffcb9a','#d1e8e2'],
-  wallwidth = 50000;
+  wallwidth = 500000,
+  mousePos={x:0,y:0};
 var engine = Engine.create();
+engine.world.gravity = {x:0,y:0}
+var myswarm = Swarm.createSwarm(engine.world,100,Vector.create(100,100));
+var newHunter =new  HunterParticle(engine.world,50,50,5,myswarm.collection[0]);
+myswarm.addHunters([newHunter]);
+function update() {
+    myswarm.addTarget(mousePos);
+    newHunter.update();
+    myswarm.update();
+}
 
 if (typeof window !== 'undefined') {
     _requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame
@@ -23,14 +33,16 @@ var simulationArea = {
     height : document.querySelector('canvas').clientHeight, 
 
     init : function() {
-        // this.interval = setInterval(myswarm.update(), 20);
+        this.interval = setInterval(update, 30);
         window.addEventListener('keydown', function (e) {
             simulationArea.keys = (simulationArea.keys || []);
             simulationArea.keys[e.keyCode] = (e.type == "keydown");
+            myswarm.collection[0].applyForce(Vector.create(myswarm.collection[0].x,myswarm.collection[0].y), {x: 0, y: -0.005});
         });
         window.addEventListener('keyup', function (e) {
             simulationArea.keys[e.keyCode] = (e.type == "keydown");
-            Body.applyForce( ball, {x: ball.position.x, y: ball.position.y}, {x: 0, y: -0.5});            
+            myswarm.collection[0].applyForce(Vector.create(myswarm.collection[0].x,myswarm.collection[0].y), {x: 0, y: -0.005});
+            // Body.applyForce( myswarm.collection[0].body, {x: ball.position.x, y: ball.position.y}, {x: 0, y: -0.005});            
         });
         window.addEventListener("keydown", function(e) {
             // space and arrow keys
@@ -45,7 +57,16 @@ var simulationArea = {
             mousePos = {x:e.touches[0].clientX,
                         y:e.touches[0].clientY};
         };
-    }, 
+    },
+    run : function(myswarm) {
+        (function loop(time){
+            this.frameRequestId = _requestAnimationFrame(loop);
+            myswarm.update();
+        })();
+    },
+    stop : function(myswarm) {
+        _cancelAnimationFrame(this.frameRequestId);
+    },
     clear : function(){
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.context.fillStyle = colorScheme[1];
@@ -118,8 +139,8 @@ var ball2 = Bodies.circle(90, 280, 20,{
    }
 });
 balls = [];
-for (let index = 0; index < simulationArea.height; index+=50) {
-    for(let hor = 0; hor<simulationArea.width; hor+=70)    
+for (let index = 0; index < simulationArea.height; index+=1000) {
+    for(let hor = 0; hor<simulationArea.width; hor+=1000)    
         var part = new Particle(engine.world, hor, index, 5,{
             restitution: 1,
             render: {
@@ -130,12 +151,30 @@ for (let index = 0; index < simulationArea.height; index+=50) {
         }
         });
 }
-// var myswarm = Swarm.createSwarm(engine.world,5,{x:100,y:100});
+
 World.add(engine.world, [topWall, leftWall, rightWall, bottomWall, ball,ball2]);
+
+
+
+// var start = null;
+// var element = document.getElementById('thisone');
+
+// function step(timestamp) {
+//   if (!start) start = timestamp;
+//   var progress = timestamp - start;
+//   element.style.transform = 'translateX(' +progress / 10 + 'px)';
+//   console.log(myswarm.collection[0].x);
+
+// //   myswarm.update();
+//     window.requestAnimationFrame(step);
+// }
+
+// window.requestAnimationFrame(step);
+
 
 simulationArea.init();
 Engine.run(engine);
-
+// simulationArea.run(myswarm);
 Render.run(render);
 
 
