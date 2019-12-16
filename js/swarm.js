@@ -3,7 +3,8 @@ var Engine = Matter.Engine,
   World = Matter.World,
   Bodies = Matter.Bodies,
   Body = Matter.Body,
-  colorScheme = ['#2c3531','#116466','#d9b08c','#ffcb9a','#d1e8e2'];
+  colorScheme = ['#2c3531','#116466','#d9b08c','#ffcb9a','#d1e8e2'],
+  IVORY = '#fffff0';
 const mycanvas = document.querySelector('canvas');
 var Vector = Matter.Vector
 var VISCOSITY = 0.01
@@ -112,7 +113,7 @@ class SwarmParticle extends Particle
     explore()
     {
         randForce = Vector.create(Math.random()*10,Math.random()*10);
-        this.applyForce(randForce) 
+        this.addForce(randForce) 
     }
           
 }
@@ -236,7 +237,7 @@ class followerParticle extends Particle
         friction: 0,
         density: 0.1,
         render: {
-            fillStyle: colorScheme[1],
+            fillStyle: IVORY,
             strokeStyle: 'none',
             lineWidth: 1
         }
@@ -244,12 +245,12 @@ class followerParticle extends Particle
     {
         super(world,x,y,radius,options);
         this.target = target;
-        this.kp = 0;
-        this.ki = 0;
-        this.kd = 0;
-        this.error = 0;
-        this.errorsum = 0;
-        this.lasterror = 0;
+        this.kp = 0.001;
+        this.ki = 0.000001;
+        this.kd = 0.05;
+        this.error = Vector.create(0,0);
+        this.errorsum = Vector.create(0,0);
+        this.lasterror = Vector.create(0,0);
     }
         
     addTarget(target)
@@ -257,30 +258,19 @@ class followerParticle extends Particle
         this.target = target
         return this;
     }
-    move()
+    update()
     {
-        let relative;
-        if(this.target instanceof Vector)
-                {
-                    relative = this.target.sub(this.position);
-                }
-        else if (this.target instanceof Particle)
-                {
-                    relative = this.target.position.sub(this.position);
-                }
-        
-        var error = Vector.magnitude(relative);
-        var unitVector = relative.div(error);
-        var mag = this.error*this.kp + this.errorsum*this.ki + (this.error - this.lasterror)*this.kd;
-        var Force = relative.div(modRelative).mul(sigmoid(modRelative)*10);
-        this.applyForce(Force);
-        // if(modRelative !== 0) 
-        //     {
-        //         var Force = relative.div(modRelative).mul(sigmoid(modRelative)*10);
-        //         this.applyForce(Force);
-        //     }
-        // this.accel = relative.div(5000);
-        super.move();
+        this.error = Vector.sub(this.target,this.position);
+        // let error = Vector.magnitude(error);
+        // let unitVector = Vector.div(error,error);
+        this.errorsum = Vector.add(this.errorsum,this.error)
+
+        var Force = Vector.add(Vector.mult(this.error,this.kp),Vector.mult(this.errorsum,this.ki)) 
+        Force = Vector.add(Force,Vector.mult(Vector.sub(this.error,this.lasterror),this.kd));
+
+        this.addForce(Force);
+
+        super.update();
         this.lasterror = this.error;
         return this;
     }
