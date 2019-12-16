@@ -65,7 +65,16 @@ class Particle
         else    Body.applyForce(this.body, position, force);
         this.force = Vector.create(0,0);
     }
-        
+    addForce(force)
+    {
+        this.force = Vector.add(this.force,force);
+    }
+    update()
+    {
+        if(this.force==undefined) throw "force cannot be undefined";
+        else    Body.applyForce(this.body, this.position, this.force);
+        this.force = Vector.create(0,0);
+    }
 }
 class SwarmParticle extends Particle
 {
@@ -82,7 +91,7 @@ class SwarmParticle extends Particle
         for (const hunter of this.swarm.hunters) {
             let relative = Vector.sub(this.position,hunter.position);
             let modRelative = Vector.magnitude(relative);
-            this.force = Vector.add(this.force,Vector.mult(Vector.div(relative,modRelative),sigmoid(modRelative)*FORCE_MULTI*10));
+            this.addForce(Vector.mult(Vector.div(relative,modRelative),sigmoid(modRelative)*FORCE_MULTI*10));
         }
         return this;
     }
@@ -93,11 +102,11 @@ class SwarmParticle extends Particle
         let socPar = Vector.mult(Vector.sub(this.swarm.gbest,this.body.position),this.c2);
         let selfMo = Vector.mult(this.body.velocity,(this.w-1));
         var PSOForce = Vector.mult(Vector.add(cogPar,Vector.add(socPar,selfMo)),this.mass*FORCE_MULTI);
-        this.force = Vector.add(this.force,PSOForce);
+        this.addForce(PSOForce);
         if (distanceOptimization(this.pbest,this.swarm.target) > distanceOptimization(this.position,this.swarm.target)) this.pbest = this.position;
         // this.applyForce(Vector.create(this.x,this.y),PSOForce);
 
-        this.applyForce(Vector.create(this.x,this.y),this.force);
+        super.update();
         return this;
     }
     explore()
@@ -214,16 +223,26 @@ class HunterParticle extends Particle
         {
             var Force = Vector.mult(Vector.div(relative,modRelative),attacksigmoid(modRelative)*this.mass*FORCE_MULTI*500);
         }
-        this.applyForce(Vector.create(this.x,this.y),Force);
+        this.addForce(Force);
+        super.update();
         return this;
     }
        
 }
 class followerParticle extends Particle
 {
-    constructor(x,y,mass,radius,color,target=[],isbounded=false,velocity=[0,0],accel=[0,0])
+    constructor(world,x,y,radius,target,options={
+        restitution: 0,
+        friction: 0,
+        density: 0.1,
+        render: {
+            fillStyle: colorScheme[1],
+            strokeStyle: 'none',
+            lineWidth: 1
+        }
+    })
     {
-        super(x,y,mass,radius,color,isbounded=false,velocity=[0,0],accel=[0,0]);
+        super(world,x,y,radius,options);
         this.target = target;
         this.kp = 0;
         this.ki = 0;
@@ -250,7 +269,7 @@ class followerParticle extends Particle
                     relative = this.target.position.sub(this.position);
                 }
         
-        var error = relative.magnitude();
+        var error = Vector.magnitude(relative);
         var unitVector = relative.div(error);
         var mag = this.error*this.kp + this.errorsum*this.ki + (this.error - this.lasterror)*this.kd;
         var Force = relative.div(modRelative).mul(sigmoid(modRelative)*10);
