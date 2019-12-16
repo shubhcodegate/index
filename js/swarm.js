@@ -230,7 +230,7 @@ class HunterParticle extends Particle
     }
        
 }
-class followerParticle extends Particle
+class FollowerParticle extends Particle
 {
     constructor(world,x,y,radius,target,options={
         restitution: 0,

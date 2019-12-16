@@ -60,7 +60,7 @@ engine.world.gravity = {x:0,y:0}
 var myswarm = Swarm.createSwarm(engine.world,200,Vector.create(100,100));
 var newHunter =new  HunterParticle(engine.world,50,50,5,myswarm.collection[2]);
 var newHunter2 =new  HunterParticle(engine.world,50,50,5,myswarm.collection[0]);
-var newfollow = new followerParticle(engine.world,500,500,20,Vector.create(500,500))
+var newfollow = new FollowerParticle(engine.world,simulationArea.width/2,simulationArea.height/2,20,Vector.create(500,500))
 myswarm.addHunters([newHunter,newHunter2]);
 myswarm.addTarget(newfollow);
 function update() {
