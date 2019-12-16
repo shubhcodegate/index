@@ -163,7 +163,7 @@ class Swarm
     }
     static createSwarm(world,n,target,options={
         // friction: 0.1,
-        restitution: 0.5,
+        restitution: 1,
         render: {
             fillStyle: colorScheme[0],
             strokeStyle: 'none',
@@ -175,7 +175,7 @@ class Swarm
         var collection = [];
         
         for (let i = 0; i < n; i++) {
-            let randPos = [Math.random()*500,Math.random()*500];
+            let randPos = [Math.random()*simulationArea.width,Math.random()*simulationArea.height];
             collection.push(new SwarmParticle(world,randPos[0],randPos[1],5,newSwarm,options));      
         }
         newSwarm.addCollection(collection);

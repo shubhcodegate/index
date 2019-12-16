@@ -7,25 +7,6 @@ var Engine = Matter.Engine,
   colorScheme = ['#2c3531','#116466','#d9b08c','#ffcb9a','#d1e8e2'],
   wallwidth = 500000,
   mousePos={x:0,y:0};
-var engine = Engine.create();
-engine.world.gravity = {x:0,y:0}
-var myswarm = Swarm.createSwarm(engine.world,200,Vector.create(100,100));
-var newHunter =new  HunterParticle(engine.world,50,50,5,myswarm.collection[0]);
-myswarm.addHunters([newHunter]);
-function update() {
-    myswarm.addTarget(mousePos);
-    newHunter.update();
-    myswarm.update();
-}
-
-if (typeof window !== 'undefined') {
-    _requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame
-                                  || window.mozRequestAnimationFrame || window.msRequestAnimationFrame 
-                                  || function(callback){ window.setTimeout(function() { callback(Common.now()); }, 1000 / 60); };
-
-    _cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame 
-                                  || window.webkitCancelAnimationFrame || window.msCancelAnimationFrame;
-}
 
 var simulationArea = {
     canvas : document.querySelector('canvas'),
@@ -73,6 +54,28 @@ var simulationArea = {
         this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 }
+
+var engine = Engine.create();
+engine.world.gravity = {x:0,y:0}
+var myswarm = Swarm.createSwarm(engine.world,300,Vector.create(100,100));
+var newHunter =new  HunterParticle(engine.world,50,50,5,myswarm.collection[2]);
+myswarm.addHunters([newHunter]);
+function update() {
+    myswarm.addTarget(mousePos);
+    // newHunter.addTarget(mousePos);
+    newHunter.update();
+    myswarm.update();
+}
+
+if (typeof window !== 'undefined') {
+    _requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame
+                                  || window.mozRequestAnimationFrame || window.msRequestAnimationFrame 
+                                  || function(callback){ window.setTimeout(function() { callback(Common.now()); }, 1000 / 60); };
+
+    _cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame 
+                                  || window.webkitCancelAnimationFrame || window.msCancelAnimationFrame;
+}
+
 var render = Render.create({
   canvas: simulationArea.canvas,
   engine: engine,
@@ -81,7 +84,9 @@ var render = Render.create({
         height: simulationArea.canvas.clientHeight,
         pixelRatio: window.devicePixelRatio || 1,
         background: colorScheme[1],
-        wireframes: false
+        wireframes: false,
+        showAngleIndicator: false,
+        showVelocity: true,
   }
 });
 
