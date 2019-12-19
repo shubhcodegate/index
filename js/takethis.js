@@ -57,20 +57,29 @@ var simulationArea = {
 
 var engine = Engine.create();
 engine.world.gravity = {x:0,y:0}
-var myswarm = Swarm.createSwarm(engine.world,200,Vector.create(100,100));
+var myswarm = Swarm.createSwarm(engine.world,3,Vector.create(100,100));
+var swarmlist = [];
+for (let index = 0; index < 100; index++) {
+    swarmlist.push(Swarm.createSwarm(engine.world,2,Vector.create(100,100)));
+}
 var newHunter =new  HunterParticle(engine.world,50,50,5,myswarm.collection[2]);
 var newHunter2 =new  HunterParticle(engine.world,50,50,5,myswarm.collection[0]);
 var newfollow = new FollowerParticle(engine.world,simulationArea.width/2,simulationArea.height/2,20,Vector.create(500,500))
-myswarm.addHunters([newHunter,newHunter2]);
-myswarm.addTarget(newfollow);
+// myswarm.addHunters([newHunter,newHunter2]);
+// myswarm.addTarget(newfollow);
 function update() {
     // myswarm.addTarget(mousePos);
     newfollow.addTarget(mousePos);
     // newHunter.addTarget(mousePos);
-    newHunter.update();
-    newHunter2.update();
+    // newHunter.update();
+    // newHunter2.update();
     myswarm.update();
     newfollow.update();
+    for (let index = 0; index < 100; index++) {
+        swarmlist[index].update();
+        // swarmlist[index].explore();
+    }
+
 }
 
 if (typeof window !== 'undefined') {

@@ -10,6 +10,33 @@ var Vector = Matter.Vector
 var VISCOSITY = 0.01
 var particleCount = 0
 var FORCE_MULTI = 0.0001
+var a = 10,b = 0.5, c = -1000;
+  var mod = Math.sqrt(a*a+b*b);
+function lineFinder(pos1,pos2) {
+    // a*x + b*y + c = 0
+    
+    return Math.abs(a*pos1.x + b*pos1.y + c)/mod;
+}
+var a2 = 1,b2 = 1, c2 = -500;
+function lineFinder2(pos1,pos2) {
+    // a*x + b*y + c = 0
+    
+    return Math.abs(a2*pos1.x + b2*pos1.y + c2)/mod;
+}
+var r = 400, x0= 900, y0 = 500; var r2=r*r;
+function circleFinder(pos1,pos2) {
+    // x*x + y*y = r*r
+
+    return Math.abs((pos1.x-x0)*(pos1.x-x0)+(pos1.y-y0)*(pos1.y-y0)-r2);
+}
+var count = 0;
+function counterChanger(pos1,pos2) {
+    count++;
+    if(count<300000) return circleFinder(pos1,pos2);
+    else if(count<600000)  return lineFinder(pos1,pos2);
+    else if(count<900000) return lineFinder2(pos1,pos2);
+    else count =0;
+}
 class Particle
 {
     /*
@@ -79,13 +106,13 @@ class Particle
 }
 class SwarmParticle extends Particle
 {
-    constructor(world,x,y,radius,swarm,options,w=0.8,c1=0.04,c2=0.1){
+    constructor(world,x,y,radius,swarm,options,w=0.8,c1=0.2,c2=0.4){
         super(world,x,y,radius,options);
         this.swarm = swarm;
         this.w = w;    //Self Momentum default was 0.8
-        this.c1 = c1;    //Social Parameter default was 0.4
-        this.c2 = c2;     //Cognitive Parameter default was 0.1
-        this.pbest = this.body.position;
+        this.c1 = c1;    //Cognitive Parameter default was 0.1
+        this.c2 = c2;     //Social Parameter default was 0.4
+        this.pbest = {x:this.x,y:this.y};
     }
     avoidEnemy()
     {
@@ -99,20 +126,21 @@ class SwarmParticle extends Particle
     update()
     {
         this.avoidEnemy();
-        let cogPar = Vector.mult(Vector.sub(this.pbest,this.body.position),this.c1);
-        let socPar = Vector.mult(Vector.sub(this.swarm.gbest,this.body.position),this.c2);
+        let cogPar = Vector.mult(Vector.sub(this.pbest,this.position),this.c1);
+        let socPar = Vector.mult(Vector.sub(this.swarm.gbest,this.position),this.c2);
         let selfMo = Vector.mult(this.body.velocity,(this.w-1));
         var PSOForce = Vector.mult(Vector.add(cogPar,Vector.add(socPar,selfMo)),this.mass*FORCE_MULTI);
         this.addForce(PSOForce);
-        if (distanceOptimization(this.pbest,this.swarm.target) > distanceOptimization(this.position,this.swarm.target)) this.pbest = this.position;
+        
         // this.applyForce(Vector.create(this.x,this.y),PSOForce);
 
         super.update();
+        if (counterChanger(this.pbest,this.swarm.target) > counterChanger(this.position,this.swarm.target)) this.pbest = {x:this.x,y:this.y};
         return this;
     }
     explore()
     {
-        randForce = Vector.create(Math.random()*10,Math.random()*10);
+        var randForce = Vector.create(Math.random()*FORCE_MULTI*10,Math.random()*FORCE_MULTI*10);
         this.addForce(randForce) 
     }
           
@@ -158,16 +186,17 @@ class Swarm
     {
         for (var i of this.collection) {
             i.update();
-            if (distanceOptimization(i.pbest,this.target) < distanceOptimization(this.gbest,this.target)) this.gbest = i.pbest;
+            if (counterChanger(i.pbest,this.target) < counterChanger(this.gbest,this.target)) this.gbest = i.pbest;
     
         }
         return this;
     }   
     explore()
     {
-        for (let i = 0; i < 10; i++) 
+        for (let i = 0; i < this.collection.length*0.01; i++) 
         {
-            this.collection[Math.floor(Math.random()*this.collection.length)].explore();     
+            this.collection[Math.floor(Math.random()*this.collection.length)].explore(); 
+            // this.collection[i].explore();
         }
         return this;
     }
@@ -222,7 +251,7 @@ class HunterParticle extends Particle
         let modRelative = Vector.magnitude(relative);
         if(modRelative !== 0)
         {
-            var Force = Vector.mult(Vector.div(relative,modRelative),attacksigmoid(modRelative)*this.mass*FORCE_MULTI*500);
+            var Force = Vector.mult(Vector.div(relative,modRelative),attacksigmoid(modRelative)*this.mass*FORCE_MULTI*100);
         }
         this.addForce(Force);
         super.update();
@@ -286,8 +315,8 @@ function combination(list) {
     return results;
 }
 
-function sigmoid(x){ return 1 / (1 + Math.exp(0.2*x-10)); } 
-function attacksigmoid(x){return 1 / (1 + Math.exp(-0.05*x+10));}  
+function sigmoid(x){ return 1 / (1 + Math.exp(0.2*x-8)); } 
+function attacksigmoid(x){return 1 / (1 + Math.exp(-0.05*x+2));}  
 function distanceOptimization(pos1,pos2) {
     return Vector.magnitude(Vector.sub(pos1,pos2));
 }
