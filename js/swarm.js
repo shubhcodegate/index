@@ -10,20 +10,25 @@ var Vector = Matter.Vector
 var VISCOSITY = 0.01
 var particleCount = 0
 var FORCE_MULTI = 0.0001
-var a = 10,b = 0.5, c = -1000;
-  var mod = Math.sqrt(a*a+b*b);
-function lineFinder(pos1,pos2) {
+var exploreEvent = new Event('exploreEvent');
+var a = 10,b = 0.05, c = -1000;
+var mod = Math.sqrt(a*a+b*b);
+function PicturFinder(pos1,pos2) {
+    let i = Math.floor(pos1.y*simulationArea.width + pos1.x);
+    return pixelData[i*4+1];
+}
+  function lineFinder(pos1,pos2) {
     // a*x + b*y + c = 0
     
     return Math.abs(a*pos1.x + b*pos1.y + c)/mod;
 }
-var a2 = 1,b2 = 1, c2 = -500;
+var a2 = 10,b2 = 0.02, c2 = -12000;
 function lineFinder2(pos1,pos2) {
     // a*x + b*y + c = 0
     
     return Math.abs(a2*pos1.x + b2*pos1.y + c2)/mod;
 }
-var r = 400, x0= 900, y0 = 500; var r2=r*r;
+var r = 250, x0= document.querySelector('canvas').clientWidth/2, y0 = document.querySelector('canvas').clientHeight/2; var r2=r*r;
 function circleFinder(pos1,pos2) {
     // x*x + y*y = r*r
 
@@ -32,9 +37,24 @@ function circleFinder(pos1,pos2) {
 var count = 0;
 function counterChanger(pos1,pos2) {
     count++;
-    if(count<300000) return circleFinder(pos1,pos2);
-    else if(count<600000)  return lineFinder(pos1,pos2);
-    else if(count<900000) return lineFinder2(pos1,pos2);
+    if(count<300000) {
+        if(count==299999){
+            document.querySelector('canvas').dispatchEvent(exploreEvent);
+        }       
+        return circleFinder(pos1,pos2);
+    }
+    else if(count<600000){
+        if(count==599999){
+            document.querySelector('canvas').dispatchEvent(exploreEvent);
+        } 
+            return PicturFinder(pos1,pos2);
+    }
+    else if(count<900000) {
+        if(count==899999){
+            document.querySelector('canvas').dispatchEvent(exploreEvent);
+        } 
+        return lineFinder2(pos1,pos2);
+    }
     else count =0;
 }
 class Particle
@@ -140,7 +160,7 @@ class SwarmParticle extends Particle
     }
     explore()
     {
-        var randForce = Vector.create(Math.random()*FORCE_MULTI*10,Math.random()*FORCE_MULTI*10);
+        var randForce = Vector.create((Math.random()-0.5)*FORCE_MULTI*300,(Math.random()-0.5)*FORCE_MULTI*300);
         this.addForce(randForce) 
     }
           
@@ -202,7 +222,8 @@ class Swarm
     }
     static createSwarm(world,n,target,options={
         // friction: 0.1,
-        restitution: 1,
+        restitution: 0.6,
+        density: 0.01,
         render: {
             fillStyle: colorScheme[0],
             strokeStyle: 'none',
@@ -215,7 +236,7 @@ class Swarm
         
         for (let i = 0; i < n; i++) {
             let randPos = [Math.random()*simulationArea.width,Math.random()*simulationArea.height];
-            collection.push(new SwarmParticle(world,randPos[0],randPos[1],5,newSwarm,options));      
+            collection.push(new SwarmParticle(world,randPos[0],randPos[1],3,newSwarm,options));      
         }
         newSwarm.addCollection(collection);
         return newSwarm;

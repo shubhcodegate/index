@@ -32,12 +32,23 @@ var simulationArea = {
             }
         }, false);
         this.canvas.onmousemove=function(e) {
-            mousePos = {x:e.x,y:e.y};
+            mousePos.x=e.x,mousePos.y=e.y;
         };
         this.canvas.ontouchmove=function(e) {
-            mousePos = {x:e.touches[0].clientX,
-                        y:e.touches[0].clientY};
+            mousePos.x=e.touches[0].clientX,
+            mousePos.y=e.touches[0].clientY;
         };
+        this.canvas.onclick=function(e) {
+            document.querySelector('canvas').dispatchEvent(exploreEvent);
+            console.log(document.querySelector('canvas').getContext('2d').getImageData(e.offsetX, e.offsetY, 1, 1).data);
+            console.log('@offsetX '+e.offsetX + ' and offsetY '+e.offsetY);
+        };
+        this.canvas.addEventListener("exploreEvent",function (e) { 
+            console.log("event triggered"); 
+            for (let index = 0; index < swarmlist.length; index++) {
+                swarmlist[index].explore();
+            }},
+            false);
     },
     run : function(myswarm) {
         (function loop(time){
@@ -59,8 +70,8 @@ var engine = Engine.create();
 engine.world.gravity = {x:0,y:0}
 var myswarm = Swarm.createSwarm(engine.world,3,Vector.create(100,100));
 var swarmlist = [];
-for (let index = 0; index < 100; index++) {
-    swarmlist.push(Swarm.createSwarm(engine.world,2,Vector.create(100,100)));
+for (let index = 0; index < 200; index++) {
+    swarmlist.push(Swarm.createSwarm(engine.world,3,Vector.create(100,100)));
 }
 var newHunter =new  HunterParticle(engine.world,50,50,5,myswarm.collection[2]);
 var newHunter2 =new  HunterParticle(engine.world,50,50,5,myswarm.collection[0]);
@@ -75,7 +86,7 @@ function update() {
     // newHunter2.update();
     myswarm.update();
     newfollow.update();
-    for (let index = 0; index < 100; index++) {
+    for (let index = 0; index < swarmlist.length; index++) {
         swarmlist[index].update();
         // swarmlist[index].explore();
     }
