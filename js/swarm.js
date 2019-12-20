@@ -15,18 +15,20 @@ var a = 10,b = 0.05, c = -1000;
 var mod = Math.sqrt(a*a+b*b);
 function PicturFinder(pos1,pos2) {
     let i = Math.floor(pos1.y*simulationArea.width + pos1.x);
-    return pixelData[i*4+1];
+    let dist = pixelData[i*4]+pixelData[i*4+1]+pixelData[i*4+2]+pixelData[i*4+3];
+    return dist*5;
 }
   function lineFinder(pos1,pos2) {
     // a*x + b*y + c = 0
     
     return Math.abs(a*pos1.x + b*pos1.y + c)/mod;
 }
-var a2 = 10,b2 = 0.02, c2 = -12000;
+var a2 = 10,b2 = 0.02, c2 = -document.querySelector('canvas').clientWidth*9;
+var mod2 = Math.sqrt(a2*a2+b2*b2);
 function lineFinder2(pos1,pos2) {
     // a*x + b*y + c = 0
     
-    return Math.abs(a2*pos1.x + b2*pos1.y + c2)/mod;
+    return Math.abs(a2*pos1.x + b2*pos1.y + c2)/mod2;
 }
 var r = 250, x0= document.querySelector('canvas').clientWidth/2, y0 = document.querySelector('canvas').clientHeight/2; var r2=r*r;
 function circleFinder(pos1,pos2) {
@@ -47,7 +49,7 @@ function counterChanger(pos1,pos2) {
         if(count==599999){
             document.querySelector('canvas').dispatchEvent(exploreEvent);
         } 
-            return PicturFinder(pos1,pos2);
+            return lineFinder(pos1,pos2);
     }
     else if(count<900000) {
         if(count==899999){
@@ -213,7 +215,7 @@ class Swarm
     }   
     explore()
     {
-        for (let i = 0; i < this.collection.length*0.01; i++) 
+        for (let i = 0; i < this.collection.length*0.1; i++) 
         {
             this.collection[Math.floor(Math.random()*this.collection.length)].explore(); 
             // this.collection[i].explore();
@@ -236,7 +238,7 @@ class Swarm
         
         for (let i = 0; i < n; i++) {
             let randPos = [Math.random()*simulationArea.width,Math.random()*simulationArea.height];
-            collection.push(new SwarmParticle(world,randPos[0],randPos[1],3,newSwarm,options));      
+            collection.push(new SwarmParticle(world,randPos[0],randPos[1],2,newSwarm,options));      
         }
         newSwarm.addCollection(collection);
         return newSwarm;
