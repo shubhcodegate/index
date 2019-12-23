@@ -11,7 +11,7 @@ var VISCOSITY = 0.01
 var particleCount = 0
 var FORCE_MULTI = 0.0001
 var exploreEvent = new Event('exploreEvent');
-var a = 10,b = 0.05, c = -1000;
+var a = 10,b = 0.05, c = -document.querySelector('canvas').clientWidth*2;
 var mod = Math.sqrt(a*a+b*b);
 function PicturFinder(pos1,pos2) {
     let i = Math.floor(pos1.y*simulationArea.width + pos1.x);
@@ -23,7 +23,7 @@ function PicturFinder(pos1,pos2) {
     
     return Math.abs(a*pos1.x + b*pos1.y + c)/mod;
 }
-var a2 = 10,b2 = 0.02, c2 = -document.querySelector('canvas').clientWidth*9;
+var a2 = 10,b2 = 0.02, c2 = -document.querySelector('canvas').clientWidth*8;
 var mod2 = Math.sqrt(a2*a2+b2*b2);
 function lineFinder2(pos1,pos2) {
     // a*x + b*y + c = 0
@@ -38,7 +38,7 @@ function circleFinder(pos1,pos2) {
 }
 var count = 0;
 function counterChanger(pos1,pos2) {
-    count++;
+    count+=0.5;
     if(count<300000) {
         if(count==299999){
             document.querySelector('canvas').dispatchEvent(exploreEvent);
@@ -62,12 +62,11 @@ function counterChanger(pos1,pos2) {
 class Particle
 {
     /*
-    This a Physics Particle which follows physics.
-    @param position
-    @param mass
-    @param radius
-    @param velocity default [0,0]
-    @param accel default [0,0]
+    *This a Physics Particle which follows physics.
+    * @param {world}
+    * @param {x}
+    * @param {y}
+    * @param {radius}
     */
     constructor(world,x,y,radius,options={
         restitution: 0,
